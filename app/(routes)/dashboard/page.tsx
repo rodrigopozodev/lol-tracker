@@ -124,10 +124,6 @@ export default async function DashboardPage() {
               <span>• Nivel {data?.summonerLevel ?? "—"}</span>
             </div>
           </div>
-
-          <a href="/settings" className="hidden sm:inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[color:var(--color-form-foreground)] px-3 py-2 text-sm transition-colors">
-            Ajustes
-          </a>
         </div>
       </div>
 

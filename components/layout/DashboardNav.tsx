@@ -30,12 +30,6 @@ export default function DashboardNav() {
         <span className="text-xs text-[color:var(--color-form-placeholder)]">Tu cuenta</span>
       </div>
       <div className="flex items-center gap-3">
-        <Link
-          href="/settings"
-          className="hidden sm:inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[color:var(--color-form-foreground)] px-3 py-2 text-sm transition-colors"
-        >
-          Ajustes
-        </Link>
         <Button onClick={logout} disabled={loading} variant="secondary">
           {loading ? "Saliendo..." : "Cerrar sesión"}
         </Button>

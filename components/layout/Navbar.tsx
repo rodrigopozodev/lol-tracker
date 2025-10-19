@@ -7,7 +7,6 @@ export default function Navbar() {
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/auth/login">Login</Link>
         <Link href="/auth/register">Registro</Link>
-        <Link href="/settings">Settings</Link>
       </div>
     </nav>
   );
