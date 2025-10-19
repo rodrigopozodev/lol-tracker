@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+Date: Sat, 18 Oct 2025 13:15:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"message":"Cuenta creada en Supabase Auth. Verifica tu email. (PUUID pendiente)","status":"created","email_sent":false,"sms_sent":false,"puuid":null,"user_id":"d067f83a-c448-4921-9ba9-bd619fae6349"}
