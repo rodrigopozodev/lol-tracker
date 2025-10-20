@@ -1,17 +1,45 @@
+"use client";
 import React from "react";
 
-type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary";
 };
 
-export const Button: React.FC<Props> = ({ className = "", variant = "primary", disabled, ...props }) => {
-  const base = "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed";
-  const primary = "bg-primary text-primary-foreground hover:bg-primary/90 ring-1 ring-ring/20 hover:ring-ring/30 shadow-sm hover:shadow-md";
-  const secondary = "border border-border/50 bg-transparent text-foreground hover:border-primary hover:bg-primary/10 ring-1 ring-ring/10";
-  const styles = `${base} ${variant === "primary" ? primary : secondary} ${className}`;
+export const Button: React.FC<ButtonProps> = ({
+  variant = "primary",
+  className,
+  children,
+  ...rest
+}) => {
+  const base = [
+    "inline-flex",
+    "items-center",
+    "justify-center",
+    "rounded-md",
+    "px-4",
+    "py-2",
+    "text-sm",
+    "font-medium",
+    "focus-visible:outline-none",
+    "focus-visible:ring-2",
+    "ring-[color:var(--color-form-ring)]",
+    "disabled:opacity-60",
+    "disabled:cursor-not-allowed",
+  ].join(" ");
+
+  const styles = {
+    primary:
+      "bg-[color:var(--color-form-accent)] text-[color:var(--color-form-button-foreground)] hover:brightness-110",
+    secondary:
+      "bg-[color:var(--color-form-input)] text-[color:var(--color-form-foreground)] border border-[color:var(--color-form-border)] hover:bg-[color:var(--color-form-bg)]/20",
+  } as const;
+
+  const cn = [base, styles[variant], className].filter(Boolean).join(" ");
 
   return (
-    <button {...props} className={styles} disabled={disabled} />
+    <button className={cn} {...rest}>
+      {children}
+    </button>
   );
 };
 

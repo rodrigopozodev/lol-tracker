@@ -3,6 +3,8 @@ import { parseSessionCookie } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import DashboardNav from "@/components/layout/DashboardNav";
 import RefreshButton from "@/components/home/RefreshButton";
+import DashboardLines from "@/components/DashboardLines";
+import ProfileIcon from "@/components/home/ProfileIcon";
 
 function clusterToLabel(cluster?: string | null) {
   const map: Record<string, string> = {
@@ -34,7 +36,7 @@ export default async function HomePage() {
   const meta = (userData?.user as any)?.user_metadata || {};
 
   const profileIconUrl = meta?.riot_profile_icon_id
-    ? `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${meta.riot_profile_icon_id}.jpg`
+    ? `https://ddragon.leagueoflegends.com/cdn/14.21.1/img/profileicon/${meta.riot_profile_icon_id}.png`
     : null;
   const displayName = meta?.riot_gameName ?? meta?.riot_summoner_name ?? "—";
   const displayTag = meta?.riot_tagLine ? `#${meta.riot_tagLine}` : "";
@@ -42,53 +44,60 @@ export default async function HomePage() {
   const level = meta?.riot_summoner_level ?? null;
 
   return (
-    <div className="grid gap-6">
-      <DashboardNav />
+    <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0416]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60">
+        <DashboardLines />
+      </div>
+      <section className="relative z-10 mx-auto w-full max-w-4xl px-3 sm:px-6 py-6">
+        <DashboardNav />
 
-      {/* Header sin llamadas a la API: datos leídos directamente de BD */}
-      <div className="rounded-2xl bg-[color:var(--color-form-bg)]/65 backdrop-blur-xl border border-[color:var(--color-form-border)]/40 ring-1 ring-[color:var(--color-form-ring)]/25 shadow-xl p-5 sm:p-6">
-        <div className="flex items-center gap-4 sm:gap-6">
-          {profileIconUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              alt="Icono de perfil"
-              src={profileIconUrl}
-              width={72}
-              height={72}
-              className="rounded-xl object-cover"
-            />
-          ) : (
-            <div className="w-[72px] h-[72px] rounded-xl bg-black/20" />
-          )}
+        <div className="mt-8">
+          {/* Título */}
+          <h1 className="text-3xl font-bold text-white mb-8">Home</h1>
 
-          <div className="flex-1">
-            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[color:var(--color-form-foreground)] flex items-center gap-3">
-              <span>
-                {displayName}
-                {displayTag && (
-                  <span className="text-[color:var(--color-form-placeholder)] ml-1">{displayTag}</span>
+          {/* Tarjeta de usuario */}
+          <div className="rounded-2xl bg-[#1a0b2e] border border-purple-500/30 p-6 shadow-[0_0_20px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all duration-300 animate-fadeIn">
+            <div className="flex items-center gap-4">
+              {/* Icono de perfil */}
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-purple-900/30 flex-shrink-0 border-2 border-purple-500/50 animate-scaleIn">
+                <ProfileIcon src={profileIconUrl} size={64} />
+              </div>
+
+              {/* Información del jugador */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-xl font-bold text-white">
+                    {displayName}
+                    <span className="text-purple-300">{displayTag}</span>
+                  </div>
+                  <RefreshButton />
+                </div>
+                <div className="text-[#B8A9C9] mt-1">
+                  {regionLabel} • Nivel {level || "—"}
+                </div>
+                {meta?.riot_last_updated && (
+                  <div className="text-[#B8A9C9]/70 text-sm mt-2">
+                    Actualizado: {new Date(meta.riot_last_updated).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
                 )}
-              </span>
-              {/* Botón Actualizar: sólo al hacer clic se llama a la API */}
-              <RefreshButton />
+              </div>
             </div>
-            <div className="mt-1 text-xs sm:text-sm text-[color:var(--color-form-placeholder)] flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[color:var(--color-form-foreground)]/85">
-                {regionLabel}
-              </span>
-              <span>• Nivel {typeof level === "number" ? level : "—"}</span>
-            </div>
-            {meta?.riot_last_updated ? (
-              <div className="mt-2 text-[10px] text-[color:var(--color-form-placeholder)]">Actualizado: {new Date(meta.riot_last_updated).toLocaleString()}</div>
-            ) : null}
+          </div>
+
+          {/* Tarjeta de información */}
+          <div className="mt-4 rounded-2xl bg-[#1a0b2e] border border-purple-500/30 p-6 shadow-[0_0_20px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all duration-300">
+            <p className="text-[#B8A9C9] text-sm">
+              No se realizan llamadas automáticas a la API en esta página. Usa "Actualizar" para obtener y guardar los últimos datos.
+            </p>
           </div>
         </div>
-      </div>
-
-      {/* Espacio para más bloques leídos desde BD en el futuro */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-[color:var(--color-form-placeholder)]">
-        No se realizan llamadas automáticas a la API en esta página. Usa "Actualizar" para obtener y guardar los últimos datos.
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

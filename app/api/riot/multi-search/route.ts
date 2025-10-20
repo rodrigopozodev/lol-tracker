@@ -197,23 +197,92 @@ async function resolvePlayers(players: { gameName: string; tagLine: string }[], 
   return results;
 }
 
+async function resolvePlayersSimple(players: { gameName: string; tagLine: string }[], globalRegionHint?: string | null) {
+  const results = [];
+  for (const player of players) {
+    try {
+      const account = await fetchAccountByRiotId(player.gameName, player.tagLine);
+      if (!account?.puuid) {
+        results.push({ 
+          error: "Invocador no encontrado",
+          name: player.gameName,
+          tag: player.tagLine 
+        });
+        continue;
+      }
+      const preferredCluster = tagToCluster(player.tagLine) || globalRegionHint || "euw1";
+      const summoner = await fetchSummonerByPuuid(account.puuid, preferredCluster);
+      if (!summoner) {
+        results.push({ 
+          error: "Invocador no encontrado",
+          name: player.gameName,
+          tag: player.tagLine 
+        });
+        continue;
+      }
+      
+      // Convertir cluster a región legible
+      const regionMap: Record<string, string> = {
+        euw1: "EUW",
+        eun1: "EUNE", 
+        na1: "NA",
+        kr: "KR",
+        br1: "BR",
+        la1: "LAS",
+        la2: "LAN",
+        jp1: "JP",
+        oc1: "OCE",
+        ru: "RU",
+        tr1: "TR"
+      };
+      
+      results.push({
+        name: account.gameName,
+        tag: account.tagLine,
+        region: regionMap[summoner.region] || summoner.region.toUpperCase(),
+        level: summoner.summonerLevel,
+        profileIconId: summoner.profileIconId
+      });
+    } catch (e: any) {
+      results.push({ 
+        error: "Error de conexión",
+        name: player.gameName,
+        tag: player.tagLine 
+      });
+    }
+  }
+  return results;
+}
+
 export async function GET(req: Request) {
   if (!RIOT_API_KEY) {
     return NextResponse.json({ error: "RIOT_API_KEY no configurada" }, { status: 500 });
   }
   const { searchParams } = new URL(req.url);
-  const summonersParam = searchParams.get("summoners");
+  const namesParam = searchParams.get("names");
   const regionParam = searchParams.get("region");
-  if (!summonersParam) {
-    return NextResponse.json({ error: "Falta parámetro 'summoners'" }, { status: 400 });
+  
+  if (!namesParam) {
+    return NextResponse.json({ error: "Falta parámetro 'names'" }, { status: 400 });
   }
-  const players = parseSummonersParam(summonersParam);
+  
+  // Parse names: "GansterYT#EUW,Caps#EUW" -> [{gameName: "GansterYT", tagLine: "EUW"}, ...]
+  const players = namesParam.split(',').map(name => {
+    const trimmed = name.trim();
+    const match = trimmed.match(/^(.+?)#([A-Za-z0-9]+)$/);
+    if (match) {
+      return { gameName: match[1], tagLine: match[2] };
+    }
+    return null;
+  }).filter(Boolean) as { gameName: string; tagLine: string }[];
+  
   if (!players.length) {
-    return NextResponse.json({ error: "Formato de 'summoners' inválido" }, { status: 400 });
+    return NextResponse.json({ error: "Formato de 'names' inválido. Use: Jugador#TAG,Jugador2#TAG2" }, { status: 400 });
   }
+  
   const globalHint = regionParam && CLUSTERS.includes(regionParam) ? regionParam : null;
-  const results = await resolvePlayers(players, globalHint);
-  return NextResponse.json({ results });
+  const results = await resolvePlayersSimple(players, globalHint);
+  return NextResponse.json(results);
 }
 
 export async function POST(req: Request) {
