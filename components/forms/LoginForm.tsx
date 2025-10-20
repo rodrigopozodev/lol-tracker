@@ -28,8 +28,8 @@ export const LoginForm: React.FC = () => {
       if (!res.ok) {
         setError(json.error || "Error de login");
       } else {
-        // Redirigir al dashboard tras login correcto
-        router.replace("/dashboard");
+        // Redirigir a Home tras login correcto
+        router.replace("/home");
       }
     } catch (err: any) {
       setError(err?.message || "Error de red");

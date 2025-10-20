@@ -63,7 +63,7 @@ export default function VerifyPhonePage() {
               sessionStorage.removeItem("register_password");
               sessionStorage.removeItem("register_dev_phone_code");
             } catch {}
-            router.push("/dashboard");
+            router.push("/home");
           }
         } else {
           // Si no tenemos las credenciales, llevar al login
