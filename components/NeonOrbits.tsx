@@ -1,4 +1,5 @@
 "use client";
+import "@/styles/glowOrbits.css";
 
 export default function NeonOrbits() {
   return (
@@ -20,7 +21,14 @@ export default function NeonOrbits() {
             <stop offset="50%" stopColor="#3D7EFF" />
             <stop offset="100%" stopColor="#7EE8FA" />
           </linearGradient>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox">
+          <filter
+            id="glow"
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+            filterUnits="objectBoundingBox"
+          >
             <feGaussianBlur stdDeviation="8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -46,7 +54,7 @@ export default function NeonOrbits() {
           />
         </g>
 
-        {/* Arco cálido (naranja) interior */}
+        {/* Arco cálido interior (naranja) */}
         <g className="animate-orbit-slow" filter="url(#glow)" transform="translate(500 500)">
           <circle
             r="250"
@@ -58,7 +66,7 @@ export default function NeonOrbits() {
           />
         </g>
 
-        {/* Arco cálido exterior con trazo fino */}
+        {/* Arco cálido exterior */}
         <g className="animate-orbit-slower" filter="url(#glow)" transform="translate(500 500)">
           <circle
             r="470"

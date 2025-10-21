@@ -28,7 +28,6 @@ export const LoginForm: React.FC = () => {
       if (!res.ok) {
         setError(json.error || "Error de login");
       } else {
-        // Redirigir a Home tras login correcto
         router.replace("/home");
       }
     } catch (err: any) {
@@ -39,12 +38,12 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={submit} className="max-w-sm space-y-3">
+    <form onSubmit={submit} className="max-w-sm mx-auto space-y-3">
       <input
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email"
-        className="border p-2 w-full"
+        className="border p-2 w-full rounded"
       />
 
       <div className="relative">
@@ -53,7 +52,7 @@ export const LoginForm: React.FC = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="border p-2 w-full pr-16"
+          className="border p-2 w-full pr-16 rounded"
           aria-label="Contraseña"
         />
         <button
@@ -67,10 +66,19 @@ export const LoginForm: React.FC = () => {
         </button>
       </div>
 
-      <Button type="submit" disabled={loading}>
-        {loading ? "Entrando..." : "Entrar"}
-      </Button>
+      {/* Botón centrado con estilo unificado al botón "Crear cuenta" */}
+      <div className="flex justify-center">
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
+        >
+          {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+        </Button>
+      </div>
+
       {error && <p className="text-red-600 text-sm">{error}</p>}
+
       {riot && (
         <div className="text-sm mt-2">
           <p>Invocador: {riot?.name ?? "-"}</p>
@@ -81,4 +89,5 @@ export const LoginForm: React.FC = () => {
     </form>
   );
 };
+
 export default LoginForm;

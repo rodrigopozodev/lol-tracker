@@ -1,0 +1,18 @@
+@keyframes orbit-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes orbit-slower {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Aplica las animaciones con rotación lineal infinita */
+.animate-orbit-slow {
+  animation: orbit-slow 40s linear infinite;
+}
+
+.animate-orbit-slower {
+  animation: orbit-slower 80s linear infinite;
+}

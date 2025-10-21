@@ -112,8 +112,6 @@ export default function MultiSearchPage() {
         <DashboardNav />
 
         <div className="mt-8">
-          {/* Título */}
-          <h1 className="text-3xl font-bold text-white mb-8">Multi-search</h1>
 
           {/* Contenedor de inputs */}
           <div className="space-y-4 mb-8">

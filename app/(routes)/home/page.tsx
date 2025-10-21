@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { parseSessionCookie } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import DashboardNav from "@/components/layout/DashboardNav";
@@ -43,6 +43,28 @@ export default async function HomePage() {
   const regionLabel = clusterToLabel(meta?.riot_region ?? null);
   const level = meta?.riot_summoner_level ?? null;
 
+  // Obtener rango SoloQ del usuario registrado (si hay PUUID)
+  let soloLabel: string = "Unranked";
+  let soloIconUrl: string | null = null;
+  try {
+    const puuid: string | undefined = meta?.riot_puuid;
+    if (puuid) {
+      const headersList = await headers();
+      const protocol = headersList.get("x-forwarded-proto") || "http";
+      const host = headersList.get("host") || "localhost:3000";
+      const leagueUrl = `${protocol}://${host}/api/riot/league?puuid=${encodeURIComponent(puuid)}`;
+      const leagueRes = await fetch(leagueUrl, { cache: "no-store" });
+      if (leagueRes.ok) {
+        const leagueJson = await leagueRes.json();
+        const solo = leagueJson?.solo || null;
+        if (solo && solo.tier && solo.rank) {
+          soloLabel = `${solo.tier} ${solo.rank} (${solo.leaguePoints} LP)`;
+          soloIconUrl = `https://opgg-static.akamaized.net/images/medals_new/${String(solo.tier).toLowerCase()}.png`;
+        }
+      }
+    }
+  } catch {}
+
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0416]">
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60">
@@ -53,39 +75,59 @@ export default async function HomePage() {
 
         <div className="mt-8">
           {/* Título */}
-          <h1 className="text-3xl font-bold text-white mb-8">Home</h1>
+          
 
           {/* Tarjeta de usuario */}
-          <div className="rounded-2xl bg-[#1a0b2e] border border-purple-500/30 p-6 shadow-[0_0_20px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all duration-300 animate-fadeIn">
-            <div className="flex items-center gap-4">
-              {/* Icono de perfil */}
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-purple-900/30 flex-shrink-0 border-2 border-purple-500/50 animate-scaleIn">
-                <ProfileIcon src={profileIconUrl} size={64} />
+          <div className="relative rounded-2xl bg-[#1a0b2e] border border-purple-500/30 p-6 shadow-[0_0_20px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:-translate-y-0.5 transition-all duration-300 animate-fadeIn">
+            <div className="flex flex-col items-center text-center gap-4">
+              {/* Icono de perfil grande */}
+              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-purple-900/30 border-2 border-purple-500/50">
+                <ProfileIcon src={profileIconUrl} size={112} />
               </div>
 
-              {/* Información del jugador */}
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="text-xl font-bold text-white">
-                    {displayName}
-                    <span className="text-purple-300">{displayTag}</span>
-                  </div>
-                  <RefreshButton />
+              {/* Nombre y tag */}
+              <div className="text-2xl md:text-3xl font-bold text-white">
+                {displayName}
+                <span className="text-purple-300">{displayTag}</span>
+              </div>
+
+              {/* Rango debajo del nombre */}
+              <div className="flex flex-col items-center gap-3">
+                {/* Icono de rango grande encima */}
+                {soloIconUrl ? (
+                  <img src={soloIconUrl} alt="Rango" width={120} height={120} className="w-24 h-24 md:w-30 md:h-30 object-contain" />
+                ) : null}
+                {/* Texto del rango debajo */}
+                <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30">
+                  <span className="text-white font-semibold text-sm md:text-base">{soloLabel}</span>
                 </div>
-                <div className="text-[#B8A9C9] mt-1">
-                  {regionLabel} • Nivel {level || "—"}
+              </div>
+
+              {/* Región y nivel */}
+              <div className="text-[#B8A9C9] mt-1">
+                {regionLabel} • Nivel {level || "—"}
+              </div>
+
+              {/* Actualizado */}
+              {meta?.riot_last_updated && (
+                <div className="text-[#B8A9C9]/70 text-sm">
+                  Actualizado: {new Date(meta.riot_last_updated).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </div>
-                {meta?.riot_last_updated && (
-                  <div className="text-[#B8A9C9]/70 text-sm mt-2">
-                    Actualizado: {new Date(meta.riot_last_updated).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                )}
+              )}
+            </div>
+            {/* Botón responsive - esquina en desktop, centrado abajo en móvil */}
+            <div className="absolute top-4 right-4 hidden md:block">
+              <RefreshButton />
+            </div>
+            <div className="block md:hidden mt-4 pt-4 border-t border-purple-500/20">
+              <div className="flex justify-center">
+                <RefreshButton />
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 export default function RefreshButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
 
   const onRefresh = async () => {
@@ -14,8 +15,18 @@ export default function RefreshButton() {
     try {
       const res = await fetch("/api/home/refresh-summoner", { method: "POST" });
       if (!res.ok) {
-        const text = await res.text();
-        setError(text || "Error actualizando datos");
+        let msg = "";
+        try {
+          const j = await res.json();
+          msg = j?.error || j?.message || "";
+        } catch {
+          msg = await res.text();
+        }
+        if (res.status === 502 && (msg?.toLowerCase().includes("token inválido") || msg?.toLowerCase().includes("caducado"))) {
+          setShowModal(true);
+        } else {
+          setError(msg || "Error actualizando datos");
+        }
       } else {
         // Vuelve a renderizar datos del servidor sin recargar toda la página
         router.refresh();
@@ -28,11 +39,17 @@ export default function RefreshButton() {
   };
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="group relative inline-flex items-center gap-2">
+      <span
+        role="tooltip"
+        className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-normal max-w-[280px] rounded-md bg-black/80 text-white text-xs px-3 py-2 border border-white/10 shadow z-50 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 transition-all duration-200"
+      >
+        No se realizan llamadas automáticas a la API en esta página. Usa "Actualizar" para obtener y guardar los últimos datos.
+      </span>
       <button
         onClick={onRefresh}
         disabled={loading}
-        className="px-4 py-2 rounded-md bg-gradient-to-r from-[#7e22ce] to-[#a855f7] text-white font-bold hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all duration-300 disabled:opacity-60"
+        className="px-3 py-2 md:px-4 md:py-2 rounded-md bg-gradient-to-r from-[#7e22ce] to-[#a855f7] text-white font-bold hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all duration-300 disabled:opacity-60 text-sm md:text-base min-w-[120px] md:min-w-[140px]"
       >
         {loading ? (
           <span className="flex items-center gap-2">
@@ -49,6 +66,18 @@ export default function RefreshButton() {
       {error ? (
         <span className="text-xs text-red-300">{error}</span>
       ) : null}
+
+      {showModal && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="rounded-xl bg-[color:var(--color-form-bg)] border border-[color:var(--color-form-border)] p-5 w-[90%] max-w-sm">
+            <h2 className="text-lg font-bold text-white">API key caducada</h2>
+            <p className="mt-1 text-sm text-[#B8A9C9]">Actualiza la clave en la configuración del servidor y vuelve a intentar.</p>
+            <div className="mt-4 flex justify-end">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>Cerrar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

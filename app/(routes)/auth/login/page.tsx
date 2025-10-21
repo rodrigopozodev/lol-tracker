@@ -7,10 +7,19 @@ export default function LoginPage() {
   return (
     <AuthPageLayout title="Iniciar sesión">
       <LoginForm />
-      <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
-        <span className="text-[color:var(--color-form-placeholder)]">¿No tienes cuenta?</span>
+
+      {/* Contenedor compacto para "No tienes cuenta / Crear cuenta" */}
+      <div className="mt-4 flex justify-center items-center text-xs sm:text-sm gap-1">
+        <span className="text-[color:var(--color-form-placeholder)]">
+          ¿No tienes cuenta?
+        </span>
         <Link href="/auth/register" aria-label="Ir a registro">
-          <Button variant="secondary">Crear cuenta</Button>
+          <Button
+            type="button"
+            className="h-8 px-4 bg-gradient-to-r from-cyan-400 to-blue-600 text-white text-xs font-semibold rounded-full transition-all duration-300 hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95"
+          >
+            Crear cuenta
+          </Button>
         </Link>
       </div>
     </AuthPageLayout>

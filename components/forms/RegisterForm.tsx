@@ -12,14 +12,14 @@ export const RegisterForm: React.FC = () => {
   const [tagLine, setTagLine] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-const [success, setSuccess] = useState<string | null>(null);
-const router = useRouter();
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-setLoading(true);
+    setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -29,11 +29,7 @@ setLoading(true);
 
       let payload: any = null;
       let text: string | null = null;
-      try {
-        payload = await res.json();
-      } catch {
-        try { text = await res.text(); } catch {}
-      }
+      try { payload = await res.json(); } catch { try { text = await res.text(); } catch {} }
 
       if (!res.ok) {
         const msg = (payload && payload.error) || text || `Error de registro (${res.status})`;
@@ -56,10 +52,9 @@ setLoading(true);
     }
   };
 
-
-
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form onSubmit={submit} className="space-y-4 max-w-sm mx-auto">
+      {/* Email */}
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm text-form-label">Correo electrónico</label>
         <input
@@ -73,6 +68,7 @@ setLoading(true);
         />
       </div>
 
+      {/* Password */}
       <div className="space-y-2">
         <label htmlFor="password" className="text-sm text-form-label">Contraseña</label>
         <div className="relative">
@@ -97,6 +93,7 @@ setLoading(true);
         </div>
       </div>
 
+      {/* Teléfono */}
       <div className="space-y-2">
         <label htmlFor="phone" className="text-sm text-form-label">Teléfono (opcional)</label>
         <input
@@ -111,6 +108,7 @@ setLoading(true);
         <p className="text-xs text-form-label">Usado para verificación por SMS (si lo habilitas).</p>
       </div>
 
+      {/* Riot ID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label htmlFor="gameName" className="text-sm text-form-label">Riot ID: GameName</label>
@@ -134,24 +132,34 @@ setLoading(true);
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full h-12 bg-gradient-to-r from-form-gradient-from to-form-gradient-to hover:opacity-95 text-form-foreground font-bold text-base uppercase tracking-wider shadow-lg shadow-secondary/30 hover:shadow-xl hover:shadow-secondary/50 rounded-md ring-1 ring-form-ring/30">
+      {/* Botón Crear cuenta */}
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
+      >
         {loading ? "Creando..." : "Crear cuenta"}
       </Button>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-green-600 text-sm">{success}</p>}
 
-      <div className="pt-2">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.push("/auth/login")}
-          className="w-full h-11 border-form-border text-form-foreground"
-        >
-          Ya tengo cuenta, ir a login
-        </Button>
-      </div>
+
+{/* Texto + botón centrados */}
+<div className="flex items-center justify-center gap-2 pt-2">
+  <span className="text-[color:var(--color-form-placeholder)] text-sm">¿Ya tienes cuenta?</span>
+  <Button
+    type="button"
+    onClick={() => router.push("/auth/login")}
+    className="h-11 px-4 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-semibold rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
+  >
+    Iniciar sesión
+  </Button>
+</div>
+
+
     </form>
   );
 };
+
 export default RegisterForm;

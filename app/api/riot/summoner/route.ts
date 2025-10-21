@@ -21,7 +21,7 @@ async function fetchAccountByPuuid(puuid: string) {
         return res.json();
       }
       if (res.status === 403) {
-        throw new Error("RIOT_TOKEN_INVALID");
+        return "RIOT_TOKEN_INVALID" as any;
       }
     } catch (e) {
       // try next group
@@ -39,6 +39,9 @@ async function fetchSummonerByPuuid(puuid: string) {
         headers: { "X-Riot-Token": RIOT_API_KEY },
         cache: "no-store",
       });
+      if (res.status === 403) {
+        return "RIOT_TOKEN_INVALID" as any;
+      }
       if (res.ok) {
         const json = await res.json();
         return { ...json, region: cluster };
@@ -65,16 +68,21 @@ export async function GET(req: Request) {
     fetchSummonerByPuuid(puuid),
   ]);
 
+  if (account === "RIOT_TOKEN_INVALID" || summoner === "RIOT_TOKEN_INVALID") {
+    return NextResponse.json({ error: "Riot API: token inválido o caducado" }, { status: 502 });
+  }
+
   if (!summoner) {
     return NextResponse.json({ error: "No se pudo resolver el invocador por PUUID" }, { status: 404 });
   }
 
   return NextResponse.json({
-    gameName: account?.gameName ?? null,
-    tagLine: account?.tagLine ?? null,
-    name: summoner?.name ?? null,
-    summonerLevel: summoner?.summonerLevel ?? null,
-    profileIconId: summoner?.profileIconId ?? null,
-    region: summoner?.region ?? null,
+    gameName: (account as any)?.gameName ?? null,
+    tagLine: (account as any)?.tagLine ?? null,
+    name: (summoner as any)?.name ?? null,
+    summonerId: (summoner as any)?.id ?? null,
+    summonerLevel: (summoner as any)?.summonerLevel ?? null,
+    profileIconId: (summoner as any)?.profileIconId ?? null,
+    region: (summoner as any)?.region ?? null,
   });
 }
