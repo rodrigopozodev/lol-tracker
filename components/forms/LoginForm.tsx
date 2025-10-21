@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -38,55 +40,74 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={submit} className="max-w-sm mx-auto space-y-3">
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        className="border p-2 w-full rounded"
-      />
-
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="border p-2 w-full pr-16 rounded"
-          aria-label="Contraseña"
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword((v) => !v)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded bg-gray-800/40 hover:bg-gray-800/60 text-gray-100"
-          aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-          title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-        >
-          {showPassword ? "Ocultar" : "Mostrar"}
-        </button>
-      </div>
-
-      {/* Botón centrado con estilo unificado al botón "Crear cuenta" */}
-      <div className="flex justify-center">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
-        >
-          {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-        </Button>
-      </div>
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      {riot && (
-        <div className="text-sm mt-2">
-          <p>Invocador: {riot?.name ?? "-"}</p>
-          <p>Nivel: {riot?.level ?? "-"}</p>
-          <p>Región: {riot?.region ?? "-"}</p>
+    // Contenedor padre con z-index alto para que todo el contenido esté por encima del fondo
+    <div className="relative z-10">
+      <form onSubmit={submit} className="max-w-sm mx-auto space-y-4">
+        {/* Logo centrado */}
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/LoL-Tracker.png"
+            alt="Logo LoL Tracker"
+            width={120}
+            height={120}
+            className="rounded-lg"
+            priority
+          />
         </div>
-      )}
-    </form>
+
+        {/* Email */}
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Correo electrónico"
+          className="border p-3 w-full rounded-md bg-form-input border-form-border text-form-foreground placeholder:text-form-placeholder focus:outline-none focus:ring-2 focus:ring-form-ring transition"
+        />
+
+        {/* Contraseña con icono */}
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Contraseña"
+            className="border p-3 w-full pr-12 rounded-md bg-form-input border-form-border text-form-foreground placeholder:text-form-placeholder focus:outline-none focus:ring-2 focus:ring-form-ring transition"
+            aria-label="Contraseña"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition"
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        {/* Botón de iniciar sesión */}
+        <div className="flex justify-center">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
+          >
+            {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+          </Button>
+        </div>
+
+        {/* Error */}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
+        {/* Información Riot */}
+        {riot && (
+          <div className="text-sm mt-2 text-center">
+            <p>Invocador: {riot?.name ?? "-"}</p>
+            <p>Nivel: {riot?.level ?? "-"}</p>
+            <p>Región: {riot?.region ?? "-"}</p>
+          </div>
+        )}
+      </form>
+    </div>
   );
 };
 

@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react"; // 👈 iconos SVG
 
 export const RegisterForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -27,22 +29,10 @@ export const RegisterForm: React.FC = () => {
         body: JSON.stringify({ email, password, phone: phone || null, gameName, tagLine }),
       });
 
-      let payload: any = null;
-      let text: string | null = null;
-      try { payload = await res.json(); } catch { try { text = await res.text(); } catch {} }
-
-      if (!res.ok) {
-        const msg = (payload && payload.error) || text || `Error de registro (${res.status})`;
-        setError(msg);
-      } else {
-        const msg = (payload && payload.message) || text || "Registro creado. Verifica tu teléfono por SMS.";
-        setSuccess(msg);
-        try {
-          if (payload?.user_id) sessionStorage.setItem("register_user_id", String(payload.user_id));
-          if (email) sessionStorage.setItem("register_email", email);
-          if (password) sessionStorage.setItem("register_password", password);
-          if (payload?.dev_phone_code) sessionStorage.setItem("register_dev_phone_code", String(payload.dev_phone_code));
-        } catch {}
+      const json = await res.json();
+      if (!res.ok) setError(json.error || "Error de registro");
+      else {
+        setSuccess("Registro creado correctamente");
         router.push("/auth/verify-phone");
       }
     } catch (err: any) {
@@ -54,6 +44,18 @@ export const RegisterForm: React.FC = () => {
 
   return (
     <form onSubmit={submit} className="space-y-4 max-w-sm mx-auto">
+      {/* Logo */}
+      <div className="flex justify-center mb-4">
+        <Image
+          src="/LoL-Tracker.png"
+          alt="Logo LoL Tracker"
+          width={120}
+          height={120}
+          className="rounded-lg"
+          priority
+        />
+      </div>
+
       {/* Email */}
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm text-form-label">Correo electrónico</label>
@@ -64,7 +66,7 @@ export const RegisterForm: React.FC = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tú@email.com"
-          className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring focus-visible:border-form-border transition"
+          className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring transition"
         />
       </div>
 
@@ -79,33 +81,17 @@ export const RegisterForm: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="h-12 px-4 pr-12 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring focus-visible:border-form-border transition"
+            className="h-12 px-4 pr-12 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring transition"
           />
           <button
             type="button"
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            aria-pressed={showPassword}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-1 my-1 px-3 rounded-md text-xs font-medium bg-transparent text-form-label hover:text-form-foreground hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition"
           >
-            {showPassword ? "Ocultar" : "Mostrar"}
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
-      </div>
-
-      {/* Teléfono */}
-      <div className="space-y-2">
-        <label htmlFor="phone" className="text-sm text-form-label">Teléfono (opcional)</label>
-        <input
-          id="phone"
-          type="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Ej. +346XXXXXXXX"
-          className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring focus-visible:border-form-border transition"
-        />
-        <p className="text-xs text-form-label">Usado para verificación por SMS (si lo habilitas).</p>
       </div>
 
       {/* Riot ID */}
@@ -117,7 +103,7 @@ export const RegisterForm: React.FC = () => {
             value={gameName}
             onChange={(e) => setGameName(e.target.value)}
             placeholder="Tu nombre de invocador"
-            className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring focus-visible:border-form-border transition"
+            className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring transition"
           />
         </div>
         <div className="space-y-2">
@@ -127,7 +113,7 @@ export const RegisterForm: React.FC = () => {
             value={tagLine}
             onChange={(e) => setTagLine(e.target.value)}
             placeholder="Ej. EUW"
-            className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring focus-visible:border-form-border transition"
+            className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring transition"
           />
         </div>
       </div>
@@ -136,7 +122,7 @@ export const RegisterForm: React.FC = () => {
       <Button
         type="submit"
         disabled={loading}
-        className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
+        className="w-full h-12 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-bold text-base uppercase tracking-wider rounded-full transition-all duration-300 hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95"
       >
         {loading ? "Creando..." : "Crear cuenta"}
       </Button>
@@ -144,20 +130,17 @@ export const RegisterForm: React.FC = () => {
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-green-600 text-sm">{success}</p>}
 
-
-{/* Texto + botón centrados */}
-<div className="flex items-center justify-center gap-2 pt-2">
-  <span className="text-[color:var(--color-form-placeholder)] text-sm">¿Ya tienes cuenta?</span>
-  <Button
-    type="button"
-    onClick={() => router.push("/auth/login")}
-    className="h-11 px-4 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-semibold rounded-full hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95 transition-all duration-300"
-  >
-    Iniciar sesión
-  </Button>
-</div>
-
-
+      {/* Texto + botón centrados */}
+      <div className="flex items-center justify-center gap-2 pt-2">
+        <span className="text-[color:var(--color-form-placeholder)] text-sm">¿Ya tienes cuenta?</span>
+        <Button
+          type="button"
+          onClick={() => router.push("/auth/login")}
+          className="h-11 px-4 bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-semibold rounded-full transition-all duration-300 hover:from-form-gradient-from hover:to-form-gradient-to hover:opacity-95"
+        >
+          Iniciar sesión
+        </Button>
+      </div>
     </form>
   );
 };

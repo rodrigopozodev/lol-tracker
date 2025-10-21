@@ -185,3 +185,11 @@
     clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
   }
 }
+
+@keyframes border-flow {
+  0% { border-image-source: linear-gradient(90deg, #4fd1ff, var(--color-form-ring), #ff6ec7); }
+  50% { border-image-source: linear-gradient(270deg, #4fd1ff, var(--color-form-ring), #ff6ec7); }
+  100% { border-image-source: linear-gradient(90deg, #4fd1ff, var(--color-form-ring), #ff6ec7); }
+}
+
+
