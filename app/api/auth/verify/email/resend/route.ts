@@ -14,11 +14,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
 
-    console.log("[email-resend] Resend start", { email, redirectTo: `${ENV.APP_URL}/auth/verify-phone` });
+    console.log("[email-resend] Resend start", { email, redirectTo: `${ENV.APP_URL}/auth/login` });
     const { data, error } = await supabase.auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${ENV.APP_URL}/auth/verify-phone` },
+      options: { emailRedirectTo: `${ENV.APP_URL}/auth/login` },
     } as any);
 
     if (error) {

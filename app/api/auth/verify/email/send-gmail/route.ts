@@ -21,11 +21,11 @@ export async function POST(req: Request) {
     }
 
     // Generar enlace de confirmación con Supabase usando Service Role
-    console.log("[send-gmail] Generando action_link", { email, redirectTo: `${ENV.APP_URL}/auth/verify-phone` });
+    console.log("[send-gmail] Generando action_link", { email, redirectTo: `${ENV.APP_URL}/auth/login` });
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${ENV.APP_URL}/auth/verify-phone` },
+      options: { emailRedirectTo: `${ENV.APP_URL}/auth/login` },
     } as any);
 
     if (error) {

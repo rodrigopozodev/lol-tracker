@@ -16,6 +16,27 @@ function genPhoneCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Mapear tag (EUW, EUNE, etc.) a cluster de Riot
+function tagToCluster(tag?: string | null): string | null {
+  if (!tag) return null;
+  const t = tag.toUpperCase();
+  const map: Record<string, string> = {
+    EUW: "euw1",
+    EUNE: "eun1",
+    NA: "na1",
+    KR: "kr",
+    BR: "br1",
+    LAS: "la1",
+    LAN: "la2",
+    JP: "jp1",
+    OCE: "oc1",
+    RU: "ru",
+    TR: "tr1",
+    ESP: "euw1",
+  };
+  return map[t] || null;
+}
+
 async function findPuuidBySummonerName(name: string): Promise<string | null> {
   const clusters = [
     "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
@@ -37,6 +58,24 @@ async function findPuuidBySummonerName(name: string): Promise<string | null> {
     } catch (e) {
       console.warn("[register] fallback error", { cluster, error: (e as any)?.message });
     }
+  }
+  return null;
+}
+
+// Obtener Summoner por PUUID para rellenar metadata (nivel, icono y cluster)
+async function fetchSummonerByPuuid(puuid: string, preferredCluster?: string) {
+  if (!RIOT_API_KEY) return null;
+  const headers = { "X-Riot-Token": RIOT_API_KEY as string };
+  const clusters = preferredCluster ? [preferredCluster, ...["euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"].filter((c) => c !== preferredCluster)] : ["euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"];
+  for (const cluster of clusters) {
+    const url = `https://${cluster}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
+    try {
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        return { ...json, region: cluster };
+      }
+    } catch {}
   }
   return null;
 }
@@ -92,7 +131,10 @@ export async function POST(req: Request) {
 
   try {
     const { email, password, phone, gameName, tagLine } = await req.json();
-    console.log("[register] payload", { email, hasPhone: !!phone, gameName, tagLine });
+    // Normalizamos entradas: nombre con espacios OK, tag puede venir con '#'
+    const safeGameName = (gameName ?? "").trim();
+    const safeTagLine = (tagLine ?? "").trim().replace(/^#/, "");
+    console.log("[register] payload", { email, hasPhone: !!phone, gameName: safeGameName, tagLine: safeTagLine });
 
     if (!email || !password) {
       return NextResponse.json({ error: "Faltan email y contraseña" }, { status: 400 });
@@ -108,12 +150,12 @@ export async function POST(req: Request) {
 
     // Intento best-effort de resolver PUUID (no bloqueante)
     let puuid: string | null = null;
-    if (RIOT_API_KEY && gameName && tagLine) {
+    if (RIOT_API_KEY && safeGameName && safeTagLine) {
       const headers = { "X-Riot-Token": RIOT_API_KEY };
       const accountGroups = ["europe","americas","asia"];
       try {
         for (const group of accountGroups) {
-          const riotUrl = `https://${group}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
+          const riotUrl = `https://${group}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(safeGameName)}/${encodeURIComponent(safeTagLine)}`;
           const riotRes = await fetch(riotUrl, { headers, cache: "no-store" });
           if (riotRes.ok) {
             const riotJson = await riotRes.json();
@@ -127,21 +169,37 @@ export async function POST(req: Request) {
           }
         }
         if (!puuid) {
-          puuid = await findPuuidBySummonerName(gameName);
+          puuid = await findPuuidBySummonerName(safeGameName);
         }
       } catch (e: any) {
         console.warn("[register] riot fetch error", e?.message || e);
-        puuid = await findPuuidBySummonerName(gameName);
+        puuid = await findPuuidBySummonerName(safeGameName);
       }
     }
 
+    // Preparar metadata de Riot antes del signUp para guardarla sin Admin
+    const preferredCluster = tagToCluster(safeTagLine) || undefined;
+    let summoner: any = null;
+    if (puuid) {
+      summoner = await fetchSummonerByPuuid(puuid, preferredCluster);
+    }
+    const initialMeta: Record<string, any> = {
+      riot_gameName: safeGameName || null,
+      riot_tagLine: safeTagLine || null,
+      riot_puuid: puuid || null,
+      riot_region: (summoner?.region ?? preferredCluster ?? null) || null,
+      riot_profile_icon_id: summoner?.profileIconId ?? null,
+      riot_summoner_level: summoner?.summonerLevel ?? null,
+    };
+
     // Crear usuario en Supabase Auth → email de verificación lo gestiona Supabase
-    console.log("[register] supabase.auth.signUp start", { email, redirectTo: `${ENV.APP_URL}/auth/verify-phone` });
+    console.log("[register] supabase.auth.signUp start", { email, redirectTo: `${ENV.APP_URL}/auth/login` });
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${ENV.APP_URL}/auth/verify-phone`,
+        emailRedirectTo: `${ENV.APP_URL}/auth/login`,
+        data: initialMeta,
       },
     });
     if (signUpError) {
@@ -160,9 +218,13 @@ export async function POST(req: Request) {
       console.warn("[register] No pudimos resolver userId tras signUp", { email });
     }
 
-    // Guardar riot_puuid en user_metadata si está disponible
-    if (supabaseAdmin && createdUserId && puuid) {
-      await mergeUserMetadata(createdUserId, { riot_puuid: puuid });
+    // Refuerzo: merge con Admin si está disponible (no imprescindible)
+    if (supabaseAdmin && createdUserId) {
+      try {
+        await mergeUserMetadata(createdUserId, initialMeta);
+      } catch (e) {
+        console.warn("[register] fallo rellenando metadata Riot", (e as any)?.message || e);
+      }
     }
 
     // Enviar SMS con Twilio si está configurado

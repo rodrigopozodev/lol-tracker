@@ -22,6 +22,14 @@ export const RegisterForm: React.FC = () => {
     setError(null);
     setSuccess(null);
     setLoading(true);
+
+    // Validación: GameName sin espacios
+    if (gameName.includes(" ")) {
+      setLoading(false);
+      setError("El nombre de la cuenta (GameName) debe introducirse sin espacios.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -33,7 +41,7 @@ export const RegisterForm: React.FC = () => {
       if (!res.ok) setError(json.error || "Error de registro");
       else {
         setSuccess("Registro creado correctamente");
-        router.push("/auth/verify-phone");
+        router.push("/auth/login");
       }
     } catch (err: any) {
       setError(err?.message || "Error de red");
@@ -102,9 +110,10 @@ export const RegisterForm: React.FC = () => {
             id="gameName"
             value={gameName}
             onChange={(e) => setGameName(e.target.value)}
-            placeholder="Tu nombre de invocador"
+            placeholder="Ej. Degryh"
             className="h-12 px-4 bg-form-input border border-form-border rounded-md w-full text-form-foreground placeholder:text-form-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-ring transition"
           />
+          <p className="text-xs text-form-placeholder">Introduce el nombre de la cuenta sin espacios.</p>
         </div>
         <div className="space-y-2">
           <label htmlFor="tagLine" className="text-sm text-form-label">Riot ID: TagLine</label>

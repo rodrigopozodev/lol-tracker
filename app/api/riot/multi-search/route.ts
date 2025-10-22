@@ -221,6 +221,55 @@ async function resolvePlayersSimple(players: { gameName: string; tagLine: string
         continue;
       }
       
+      // Obtener información de rango
+      let soloRank = null;
+      let flexRank = null;
+      let soloIconUrl = null;
+      let flexIconUrl = null;
+      
+      // Preferir liga por PUUID (como Home) para mayor fiabilidad entre clústeres
+      {
+        const preferred = summoner.region ? [summoner.region, ...CLUSTERS.filter((c) => c !== summoner.region)] : CLUSTERS;
+        let entries: any[] | null = null;
+        for (const cluster of preferred) {
+          try {
+            const url = `https://${cluster}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(account.puuid)}`;
+            const res = await fetch(url, { headers: { "X-Riot-Token": (RIOT_API_KEY || "") }, cache: "no-store" });
+            if (res.ok) {
+              entries = await res.json();
+              break;
+            }
+          } catch { /* continuar */ }
+        }
+        if (entries && Array.isArray(entries)) {
+          const normalized = entries
+            .filter((e) => e && e.queueType)
+            .map((e) => ({
+              queue: e.queueType,
+              tier: e.tier,
+              rank: e.rank,
+              leaguePoints: e.leaguePoints,
+              wins: e.wins,
+              losses: e.losses,
+            }));
+          const solo = normalized.find((x) => x.queue === "RANKED_SOLO_5x5") || null;
+          const flex = normalized.find((x) => x.queue === "RANKED_FLEX_SR") || null;
+
+          if (solo) {
+            soloRank = normalizeRank(solo);
+            if (solo.tier) {
+              soloIconUrl = `https://opgg-static.akamaized.net/images/medals_new/${String(solo.tier).toLowerCase()}.png`;
+            }
+          }
+          if (flex) {
+            flexRank = normalizeRank(flex);
+            if (flex.tier) {
+              flexIconUrl = `https://opgg-static.akamaized.net/images/medals_new/${String(flex.tier).toLowerCase()}.png`;
+            }
+          }
+        }
+      }
+      
       // Convertir cluster a región legible
       const regionMap: Record<string, string> = {
         euw1: "EUW",
@@ -241,7 +290,12 @@ async function resolvePlayersSimple(players: { gameName: string; tagLine: string
         tag: account.tagLine,
         region: regionMap[summoner.region] || summoner.region.toUpperCase(),
         level: summoner.summonerLevel,
-        profileIconId: summoner.profileIconId
+        profileIconId: summoner.profileIconId,
+        puuid: account.puuid,
+        soloRank: soloRank || "Unranked",
+        flexRank: flexRank || "Unranked",
+        soloIconUrl,
+        flexIconUrl
       });
     } catch (e: any) {
       results.push({ 

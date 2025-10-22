@@ -5,6 +5,7 @@ import DashboardNav from "@/components/layout/DashboardNav";
 import RefreshButton from "@/components/home/RefreshButton";
 import DashboardLines from "@/components/DashboardLines";
 import ProfileIcon from "@/components/home/ProfileIcon";
+import RankSwitcher from "@/components/home/RankSwitcher";
 
 function clusterToLabel(cluster?: string | null) {
   const map: Record<string, string> = {
@@ -43,9 +44,9 @@ export default async function HomePage() {
   const regionLabel = clusterToLabel(meta?.riot_region ?? null);
   const level = meta?.riot_summoner_level ?? null;
 
-  // Obtener rango SoloQ del usuario registrado (si hay PUUID)
-  let soloLabel: string = "Unranked";
-  let soloIconUrl: string | null = null;
+  // Obtener rango Solo/Duo y Flex por PUUID (como Dashboard)
+  let leagueSolo: any = null;
+  let leagueFlex: any = null;
   try {
     const puuid: string | undefined = meta?.riot_puuid;
     if (puuid) {
@@ -56,11 +57,8 @@ export default async function HomePage() {
       const leagueRes = await fetch(leagueUrl, { cache: "no-store" });
       if (leagueRes.ok) {
         const leagueJson = await leagueRes.json();
-        const solo = leagueJson?.solo || null;
-        if (solo && solo.tier && solo.rank) {
-          soloLabel = `${solo.tier} ${solo.rank} (${solo.leaguePoints} LP)`;
-          soloIconUrl = `https://opgg-static.akamaized.net/images/medals_new/${String(solo.tier).toLowerCase()}.png`;
-        }
+        leagueSolo = leagueJson?.solo || null;
+        leagueFlex = leagueJson?.flex || null;
       }
     }
   } catch {}
@@ -92,16 +90,7 @@ export default async function HomePage() {
               </div>
 
               {/* Rango debajo del nombre */}
-              <div className="flex flex-col items-center gap-3">
-                {/* Icono de rango grande encima */}
-                {soloIconUrl ? (
-                  <img src={soloIconUrl} alt="Rango" width={120} height={120} className="w-24 h-24 md:w-30 md:h-30 object-contain" />
-                ) : null}
-                {/* Texto del rango debajo */}
-                <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30">
-                  <span className="text-white font-semibold text-sm md:text-base">{soloLabel}</span>
-                </div>
-              </div>
+              <RankSwitcher solo={leagueSolo} flex={leagueFlex} />
 
               {/* Región y nivel */}
               <div className="text-[#B8A9C9] mt-1">
