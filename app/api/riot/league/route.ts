@@ -1,22 +1,33 @@
 import { NextResponse } from "next/server";
 
+interface LeagueEntry {
+  queueType: string;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+}
+
 const RIOT_API_KEY = process.env.RIOT_API_KEY as string | undefined;
 
 const CLUSTERS = [
   "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
 ];
 
-async function fetchLeagueEntriesByPuuid(puuid: string) {
+async function fetchLeagueEntriesByPuuid(puuid: string): Promise<{ entries: LeagueEntry[]; region: string } | null> {
   if (!RIOT_API_KEY) return null;
   for (const cluster of CLUSTERS) {
     const url = `https://${cluster}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`;
     try {
       const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
       if (res.ok) {
-        const entries = await res.json();
-        return { entries, region: cluster };
+        const entriesJson: unknown = await res.json();
+        if (Array.isArray(entriesJson)) {
+          return { entries: entriesJson as LeagueEntry[], region: cluster };
+        }
       }
-    } catch (e) {
+    } catch (error) {
       // continuar
     }
   }
@@ -41,19 +52,20 @@ export async function GET(req: Request) {
   const { entries, region } = result;
   try {
     const normalized = entries
-      .filter((e) => e && e.queueType)
-      .map((e) => ({
-        queue: e.queueType,
-        tier: e.tier,
-        rank: e.rank,
-        leaguePoints: e.leaguePoints,
-        wins: e.wins,
-        losses: e.losses,
+      .filter((entry: LeagueEntry) => Boolean(entry && entry.queueType))
+      .map((entry: LeagueEntry) => ({
+        queue: entry.queueType,
+        tier: entry.tier,
+        rank: entry.rank,
+        leaguePoints: entry.leaguePoints,
+        wins: entry.wins,
+        losses: entry.losses,
       }));
     const solo = normalized.find((x) => x.queue === "RANKED_SOLO_5x5") || null;
     const flex = normalized.find((x) => x.queue === "RANKED_FLEX_SR") || null;
     return NextResponse.json({ solo, flex, entries: normalized, region });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Error inesperado" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error inesperado";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
