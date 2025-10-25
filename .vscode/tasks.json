@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev 3000 (force)",
+      "type": "npm",
+      "script": "dev:force",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start 3000 (force)",
+      "type": "npm",
+      "script": "start:force",
+      "problemMatcher": []
+    }
+  ]
+}

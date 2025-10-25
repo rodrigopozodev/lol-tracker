@@ -20,6 +20,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 
+    // Bloquear login si el email no está verificado
+    const confirmedAt = (data.user as any)?.email_confirmed_at || (data.user as any)?.confirmed_at || null;
+    if (!confirmedAt) {
+      return NextResponse.json({ error: "Debes verificar tu correo antes de iniciar sesión." }, { status: 403 });
+    }
+
     // Refrescar metadata de Riot usando PUUID guardado
     const userId = data.user?.id;
     if (userId && supabaseAdmin) {

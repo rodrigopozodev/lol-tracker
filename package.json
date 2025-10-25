@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3000",
-    "build": "next build --turbopack",
-    "start": "next start",
+    "dev": "next dev -p 3000",
+    "dev:force": "node scripts/dev-force.js",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "start:force": "node -e \"require('child_process').execSync('netstat -ano | findstr :3000',{stdio:'ignore'}); try{const out=require('child_process').execSync('netstat -ano | findstr :3000',{encoding:'utf8'}); const pids=[...new Set(out.split(/\\r?\\n/).filter(l=>l.trim()).map(l=>l.trim().split(/\\s+/).pop()).filter(pid=>pid&&/^[0-9]+$/.test(pid)))]; for(const pid of pids){try{require('child_process').execSync('taskkill /PID '+pid+' /F',{stdio:'ignore'});}catch{}}}catch{}; require('child_process').spawn(process.platform==='win32'?'npm.cmd':'npm',['run','start'],{stdio:'inherit',shell:true});\"",
     "lint": "eslint"
   },
   "dependencies": {
