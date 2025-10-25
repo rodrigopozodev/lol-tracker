@@ -26,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="google-adsense-account" content="ca-pub-78237032685618" />
         <Script
           id="adsense-init"
           strategy="beforeInteractive"
