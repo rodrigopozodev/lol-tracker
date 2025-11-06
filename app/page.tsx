@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function RootPage() {
-  redirect("/auth/login");
+  // Iniciar en la página principal del proyecto
+  redirect("/home");
 }

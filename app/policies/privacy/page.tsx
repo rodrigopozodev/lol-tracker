@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false },
+};
+
 export default function PrivacyPolicy() {
   return (
     <main className="min-h-screen bg-[#0a0416] text-white">

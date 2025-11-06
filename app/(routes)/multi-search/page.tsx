@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import DashboardLines from "@/components/DashboardLines";
 import DashboardNav from "@/components/layout/DashboardNav";
+import MultiSearchArticle from "@/components/multi/MultiSearchArticle";
+import Script from "next/script";
 
 function clusterToLabel(cluster?: string | null) {
   const map: Record<string, string> = {
@@ -459,6 +461,18 @@ export default function MultiSearchPage() {
           )}
         </div>
       </section>
+      {/* Bloque editorial para cumplir requisitos de contenido en Multi-search */}
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-3 sm:px-6 pb-10">
+        <MultiSearchArticle />
+      </div>
+      {/* Cargar AdSense sólo en Multi-search */}
+      <Script
+        id="adsense-multi-search"
+        strategy="afterInteractive"
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823702362685618"
+        crossOrigin="anonymous"
+      />
     </main>
   );
 }
