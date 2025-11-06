@@ -25,6 +25,17 @@ export default function LoginPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Enlace público a la página de contenido */}
+      <div className="mt-3 flex justify-center">
+        <Link
+          href="/about"
+          aria-label="Leer más sobre League Tracker"
+          className="text-xs sm:text-sm text-cyan-300 hover:text-cyan-200 underline underline-offset-4"
+        >
+          Conoce League Tracker y cómo te ayuda →
+        </Link>
+      </div>
     </AuthPageLayout>
   );
 }
