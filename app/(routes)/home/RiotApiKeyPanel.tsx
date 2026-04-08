@@ -3,14 +3,17 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { refreshAccountsAction } from "./actions";
+import { useAccountBackgroundRefresh } from "./useAccountBackgroundRefresh";
 
 export function RiotApiKeyPanel() {
   const router = useRouter();
+  const { run, pending: refreshPending } = useAccountBackgroundRefresh();
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [savingKey, setSavingKey] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const busy = savingKey || refreshPending;
 
   const submit = async () => {
     setMessage(null);
@@ -19,7 +22,7 @@ export function RiotApiKeyPanel() {
       setMessage({ type: "err", text: "La clave debe empezar por RGAPI-." });
       return;
     }
-    setLoading(true);
+    setSavingKey(true);
     try {
       const res = await fetch("/api/settings/riot-api-key", {
         method: "POST",
@@ -33,11 +36,11 @@ export function RiotApiKeyPanel() {
       }
       setMessage({
         type: "ok",
-        text: "Clave guardada. Descargando datos de Riot y guardando en SQLite (suele tardar 1–5 min con varias cuentas)…",
+        text: "Clave guardada. Descargando datos en segundo plano (sin cortar por timeout del proxy)…",
       });
       setApiKey("");
 
-      const refresh = await refreshAccountsAction(null, new FormData());
+      const refresh = await run();
       if (!refresh.ok) {
         setMessage({
           type: "err",
@@ -51,15 +54,15 @@ export function RiotApiKeyPanel() {
           text:
             refresh.message +
             (refresh.updated === 0
-              ? " Comprueba también que el refresco no haya cortado por tiempo (proxy / Cloudflare)."
+              ? " Si no ves cambios, recarga la página en un momento."
               : ""),
         });
       }
       router.refresh();
     } catch {
-      setMessage({ type: "err", text: "Error de red o tiempo de espera agotado al refrescar." });
+      setMessage({ type: "err", text: "Error de red al guardar la clave o al consultar el estado del refresco." });
     } finally {
-      setLoading(false);
+      setSavingKey(false);
     }
   };
 
@@ -111,11 +114,11 @@ export function RiotApiKeyPanel() {
           </p>
           <button
             type="button"
-            disabled={loading}
+            disabled={busy}
             onClick={submit}
             className="w-full rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 py-3.5 text-base font-semibold text-white hover:from-purple-500 hover:to-purple-600 disabled:opacity-50 sm:w-auto sm:px-8"
           >
-            {loading ? "Guardando…" : "Guardar clave"}
+            {busy ? (savingKey && !refreshPending ? "Guardando clave…" : "Actualizando datos…") : "Guardar clave"}
           </button>
           {message && (
             <p

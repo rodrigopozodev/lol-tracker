@@ -1,42 +1,25 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { refreshAccountsAction, type RefreshAccountsState } from "./actions";
+import type { RefreshAccountsState } from "@/lib/refreshAccountsUiMessage";
 
-const LONG_WAIT_MS = 120_000;
+import { useAccountBackgroundRefresh } from "./useAccountBackgroundRefresh";
 
 function SubmitLabel({ pending }: { pending: boolean }) {
   return pending ? "Actualizando…" : "Refrescar datos ahora";
 }
 
 export function RefreshAccountsButton() {
-  const router = useRouter();
-  const [state, formAction, pending] = useActionState(refreshAccountsAction, null);
-  const prevPending = useRef<boolean>(false);
-  const [longWait, setLongWait] = useState(false);
-
-  useEffect(() => {
-    const wasPending = prevPending.current;
-    prevPending.current = pending;
-    // Cuando pasa de "pendiente" a "no pendiente", refrescamos para ver datos nuevos.
-    if (wasPending && !pending) {
-      router.refresh();
-    }
-  }, [pending, router]);
-
-  useEffect(() => {
-    if (!pending) {
-      setLongWait(false);
-      return;
-    }
-    const id = window.setTimeout(() => setLongWait(true), LONG_WAIT_MS);
-    return () => window.clearTimeout(id);
-  }, [pending]);
+  const { run, pending, lastState } = useAccountBackgroundRefresh();
 
   return (
     <div className="flex w-full max-w-xl flex-col items-stretch gap-3 sm:max-w-none sm:items-end">
-      <form action={formAction} className="inline">
+      <form
+        className="inline"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void run();
+        }}
+      >
         <button
           type="submit"
           disabled={pending}
@@ -48,35 +31,20 @@ export function RefreshAccountsButton() {
 
       {pending ? (
         <p className="max-w-md text-left text-sm leading-snug text-[#B8A9C9] sm:text-right">
-          Suele tardar <strong className="text-purple-200">1–5 minutos</strong> con varias cuentas (Riot + partidas +
-          ligas). El botón vuelve solo al terminar.
-          {longWait ? (
-            <>
-              {" "}
-              Si lleva <strong className="text-amber-200">más de ~2 minutos</strong> sin cambiar, puedes{" "}
-              <button
-                type="button"
-                className="text-purple-300 underline underline-offset-2 hover:text-white"
-                onClick={() => window.location.reload()}
-              >
-                recargar la página
-              </button>{" "}
-              (el indicador se resetea; si el servidor siguió trabajando, verás datos nuevos al cargar).
-            </>
-          ) : null}
+          El servidor está descargando datos en segundo plano (la conexión no se corta por tiempo de espera del
+          proxy). Suele tardar <strong className="text-purple-200">1–5 minutos</strong> con varias cuentas. Puedes
+          dejar esta pestaña abierta; al terminar verás el resultado abajo.
         </p>
       ) : null}
 
-      {state && !pending ? <ResultBanner state={state} /> : null}
+      {lastState && !pending ? <ResultBanner state={lastState} /> : null}
     </div>
   );
 }
 
 function ResultBanner({ state }: { state: RefreshAccountsState }) {
-  const success =
-    state.ok && state.updated > 0 && state.errors.length === 0;
-  const partial =
-    state.ok && state.updated > 0 && state.errors.length > 0;
+  const success = state.ok && state.updated > 0 && state.errors.length === 0;
+  const partial = state.ok && state.updated > 0 && state.errors.length > 0;
   const neutral = state.ok && state.updated === 0;
 
   return (
