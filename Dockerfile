@@ -36,6 +36,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 
+# App escribe cache/keys/db en /app/data (SQLite, riot_api_key.txt, snapshots, etc.)
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+
 USER nextjs
 
 EXPOSE 3000
