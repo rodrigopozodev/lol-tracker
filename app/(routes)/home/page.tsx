@@ -1,7 +1,12 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { getDb, listAccounts, getLatestSnapshot, type AccountSnapshotRow } from "@/lib/db";
 import { snapshotToPlayer } from "@/lib/mapHomePlayers";
 import { getRiotApiKeySavedAtMs, usesRiotApiKeyFromEnv } from "@/lib/riotApiKey";
 import { HomeAccountsShell } from "./HomeAccountsShell";
+
+/** SQLite cambia tras refrescar; sin esto Next/CDN puede servir HTML/RSC antiguo y verás “Sin snapshot” pese al mensaje de éxito. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function soloQueueTotalGames(snap: AccountSnapshotRow | null): number {
   if (!snap) return 0;
@@ -12,6 +17,7 @@ function soloQueueTotalGames(snap: AccountSnapshotRow | null): number {
 }
 
 export default async function HomePage() {
+  noStore();
   getDb();
   const accounts = listAccounts();
   const snaps = accounts.map((a) => getLatestSnapshot(a.id));

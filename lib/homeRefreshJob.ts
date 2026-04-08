@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { refreshAllAccountsFromRiot } from "@/lib/refreshAccounts";
 
 export type HomeRefreshPhase = "idle" | "running" | "finished";
@@ -45,6 +46,11 @@ export function startHomeRefreshJob(): { accepted: true; alreadyRunning: boolean
           errors: result.errors,
         },
       };
+      try {
+        revalidatePath("/home");
+      } catch {
+        /* fuera de contexto de petición puede fallar; el cliente fuerza recarga */
+      }
     })
     .catch((e: unknown) => {
       job = {

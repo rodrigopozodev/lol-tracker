@@ -55,6 +55,10 @@ export function useAccountBackgroundRefresh() {
         if (j.phase === "finished" && j.result) {
           const ui = toRefreshAccountsState(j.result);
           setLastState(ui);
+          if (typeof window !== "undefined" && ui.ok && ui.updated > 0) {
+            window.location.reload();
+            return ui;
+          }
           router.refresh();
           return ui;
         }

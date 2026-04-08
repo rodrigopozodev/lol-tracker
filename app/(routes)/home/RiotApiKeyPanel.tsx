@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import type { RefreshAccountsState } from "@/lib/refreshAccountsUiMessage";
 
@@ -9,7 +8,6 @@ import { RefreshResultBanner } from "./RefreshResultBanner";
 import { useAccountBackgroundRefresh } from "./useAccountBackgroundRefresh";
 
 export function RiotApiKeyPanel() {
-  const router = useRouter();
   const { run, pending: refreshPending } = useAccountBackgroundRefresh();
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState("");
@@ -54,7 +52,6 @@ export function RiotApiKeyPanel() {
         };
       }
       setRefreshOutcome(outcome);
-      router.refresh();
     } catch {
       setSaveError("Error de red al guardar la clave o al consultar el estado del refresco.");
     } finally {
