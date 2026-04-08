@@ -51,16 +51,13 @@ export function tagToCluster(tag?: string | null): string | null {
 
 async function fetchAccountByRiotId(gameName: string, tagLine: string) {
   const RIOT_API_KEY = getRiotApiKey();
+  if (!RIOT_API_KEY) return null;
   const headers = { "X-Riot-Token": RIOT_API_KEY || "" };
   for (const group of ACCOUNT_GROUPS) {
     const url = `https://${group}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
-    try {
-      const res = await fetch(url, { headers, cache: "no-store" });
-      if (res.ok) {
-        return await res.json();
-      }
-      if (res.status === 403) throw new Error("RIOT_TOKEN_INVALID");
-    } catch {}
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (res.ok) return await res.json();
+    if (res.status === 403) throw new Error("RIOT_TOKEN_INVALID");
   }
   return null;
 }
@@ -74,13 +71,12 @@ async function fetchSummonerByPuuid(puuid: string, preferredCluster?: string) {
     : CLUSTERS;
   for (const cluster of clusters) {
     const url = `https://${cluster}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
-    try {
-      const res = await fetch(url, { headers, cache: "no-store" });
-      if (res.ok) {
-        const json = await res.json();
-        return { ...json, region: cluster };
-      }
-    } catch {}
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (res.ok) {
+      const json = await res.json();
+      return { ...json, region: cluster };
+    }
+    if (res.status === 403) throw new Error("RIOT_TOKEN_INVALID");
   }
   return null;
 }
@@ -246,7 +242,18 @@ export async function resolvePlayersSimple(
         flexWins,
         flexLosses,
       });
-    } catch {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg === "RIOT_TOKEN_INVALID") {
+        results.push({
+          error: "Riot API: token inválido o caducado",
+          name: player.gameName,
+          tag: player.tagLine,
+          region: "",
+          level: null,
+          profileIconId: null,
+        });
+      } else {
       results.push({
         error: "Error de conexión",
         name: player.gameName,
@@ -255,6 +262,7 @@ export async function resolvePlayersSimple(
         level: null,
         profileIconId: null,
       });
+      }
     }
   }
   return results;

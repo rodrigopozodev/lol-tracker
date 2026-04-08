@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { refreshAccountsAction, type RefreshAccountsState } from "./actions";
 
 function SubmitLabel({ pending }: { pending: boolean }) {
@@ -8,7 +9,18 @@ function SubmitLabel({ pending }: { pending: boolean }) {
 }
 
 export function RefreshAccountsButton() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(refreshAccountsAction, null);
+  const prevPending = useRef<boolean>(false);
+
+  useEffect(() => {
+    const wasPending = prevPending.current;
+    prevPending.current = pending;
+    // Cuando pasa de "pendiente" a "no pendiente", refrescamos para ver datos nuevos.
+    if (wasPending && !pending) {
+      router.refresh();
+    }
+  }, [pending, router]);
 
   return (
     <div className="flex w-full max-w-xl flex-col items-stretch gap-3 sm:max-w-none sm:items-end">

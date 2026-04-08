@@ -163,6 +163,8 @@ export function MultiSearchPlayerCard({
   const [tab, setTab] = useState<"solo" | "flex">(
     player.soloRank && player.soloRank !== "Unranked" ? "solo" : "flex"
   );
+  /** null hasta el primer tick en cliente: evita hydration mismatch si `updatedAt` no viene del servidor. */
+  const [clientNow, setClientNow] = useState<number | null>(null);
   const [soloMatches, setSoloMatches] = useState<unknown[]>(() =>
     freezeRiotClientFetches && player.homeMatchCache ? player.homeMatchCache.soloMatches : []
   );
@@ -179,6 +181,10 @@ export function MultiSearchPlayerCard({
     () => player.homeMatchCache?.ddragonVersion || "16.7.1"
   );
   const hasPuuid = typeof player.puuid === "string" && player.puuid.length > 0;
+
+  useEffect(() => {
+    setClientNow(Date.now());
+  }, []);
 
   useEffect(() => {
     if (freezeRiotClientFetches) return;
@@ -305,13 +311,15 @@ export function MultiSearchPlayerCard({
           hour: "2-digit",
           minute: "2-digit",
         })
-      : new Date().toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+      : clientNow === null
+        ? "—"
+        : new Date(clientNow).toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
 
   function streakPill(
     label: string,

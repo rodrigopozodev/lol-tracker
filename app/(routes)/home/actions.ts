@@ -35,7 +35,9 @@ export async function refreshAccountsAction(
 
   const message =
     result.updated === 0
-      ? "No se actualizó ninguna cuenta (¿sin cuentas o sin API key?)."
+      ? result.errors.length > 0
+        ? `No se pudo actualizar ninguna cuenta.${errSuffix}`
+        : "No se actualizó ninguna cuenta (¿sin cuentas o sin API key?)."
       : `Listo: ${result.updated} cuenta(s) guardadas en SQLite y en data/accounts-snapshot.json.${errSuffix}`;
 
   return {
