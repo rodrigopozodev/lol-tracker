@@ -2,8 +2,6 @@ import Link from "next/link";
 import DashboardNav from "@/components/layout/DashboardNav";
 import { getDb, getChampionAggregateCache } from "@/lib/db";
 import { ChampionAggregatePanel } from "@/app/(routes)/home/ChampionAggregatePanel";
-import Script from "next/script";
-
 export default async function TopCampeonesPage() {
   getDb();
   const championAgg = getChampionAggregateCache();
@@ -29,13 +27,6 @@ export default async function TopCampeonesPage() {
           </div>
         </div>
       </section>
-      <Script
-        id="adsense-top-campeones"
-        strategy="afterInteractive"
-        async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823702362685618"
-        crossOrigin="anonymous"
-      />
     </main>
   );
 }

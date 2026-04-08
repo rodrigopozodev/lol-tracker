@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { refreshAccountsAction } from "./actions";
+
 export function RiotApiKeyPanel() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -31,12 +33,31 @@ export function RiotApiKeyPanel() {
       }
       setMessage({
         type: "ok",
-        text: "Clave guardada. Si tienes RIOT_API_KEY en .env, quítala para que use el fichero (o actualiza también la variable).",
+        text: "Clave guardada. Descargando datos de Riot y guardando en SQLite (suele tardar 1–5 min con varias cuentas)…",
       });
       setApiKey("");
+
+      const refresh = await refreshAccountsAction(null, new FormData());
+      if (!refresh.ok) {
+        setMessage({
+          type: "err",
+          text:
+            refresh.message +
+            " Si en el servidor tienes RIOT_API_KEY en el entorno, tiene prioridad sobre la clave guardada aquí: actualízala o elimínala.",
+        });
+      } else {
+        setMessage({
+          type: "ok",
+          text:
+            refresh.message +
+            (refresh.updated === 0
+              ? " Comprueba también que el refresco no haya cortado por tiempo (proxy / Cloudflare)."
+              : ""),
+        });
+      }
       router.refresh();
     } catch {
-      setMessage({ type: "err", text: "Error de red" });
+      setMessage({ type: "err", text: "Error de red o tiempo de espera agotado al refrescar." });
     } finally {
       setLoading(false);
     }

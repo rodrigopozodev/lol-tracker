@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { refreshAccountsAction, type RefreshAccountsState } from "./actions";
+
+const LONG_WAIT_MS = 120_000;
 
 function SubmitLabel({ pending }: { pending: boolean }) {
   return pending ? "Actualizando…" : "Refrescar datos ahora";
@@ -12,6 +14,7 @@ export function RefreshAccountsButton() {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(refreshAccountsAction, null);
   const prevPending = useRef<boolean>(false);
+  const [longWait, setLongWait] = useState(false);
 
   useEffect(() => {
     const wasPending = prevPending.current;
@@ -21,6 +24,15 @@ export function RefreshAccountsButton() {
       router.refresh();
     }
   }, [pending, router]);
+
+  useEffect(() => {
+    if (!pending) {
+      setLongWait(false);
+      return;
+    }
+    const id = window.setTimeout(() => setLongWait(true), LONG_WAIT_MS);
+    return () => window.clearTimeout(id);
+  }, [pending]);
 
   return (
     <div className="flex w-full max-w-xl flex-col items-stretch gap-3 sm:max-w-none sm:items-end">
@@ -33,6 +45,27 @@ export function RefreshAccountsButton() {
           <SubmitLabel pending={pending} />
         </button>
       </form>
+
+      {pending ? (
+        <p className="max-w-md text-left text-sm leading-snug text-[#B8A9C9] sm:text-right">
+          Suele tardar <strong className="text-purple-200">1–5 minutos</strong> con varias cuentas (Riot + partidas +
+          ligas). El botón vuelve solo al terminar.
+          {longWait ? (
+            <>
+              {" "}
+              Si lleva <strong className="text-amber-200">más de ~2 minutos</strong> sin cambiar, puedes{" "}
+              <button
+                type="button"
+                className="text-purple-300 underline underline-offset-2 hover:text-white"
+                onClick={() => window.location.reload()}
+              >
+                recargar la página
+              </button>{" "}
+              (el indicador se resetea; si el servidor siguió trabajando, verás datos nuevos al cargar).
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       {state && !pending ? <ResultBanner state={state} /> : null}
     </div>

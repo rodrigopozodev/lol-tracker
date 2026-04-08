@@ -6,7 +6,6 @@ import Link from "next/link";
 import { RefreshAccountsButton } from "./RefreshAccountsButton";
 import { RiotApiKeyPanel } from "./RiotApiKeyPanel";
 import { RiotApiKeyExpiryTimer } from "./RiotApiKeyExpiryTimer";
-import Script from "next/script";
 
 type Row = {
   account: AccountRow;
@@ -93,13 +92,6 @@ export function HomeAccountsShell({
           </div>
         </div>
       </section>
-      <Script
-        id="adsense-home"
-        strategy="afterInteractive"
-        async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823702362685618"
-        crossOrigin="anonymous"
-      />
     </main>
   );
 }
