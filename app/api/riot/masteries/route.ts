@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const RIOT_API_KEY = process.env.RIOT_API_KEY as string | undefined;
+import { getRiotApiKey } from "@/lib/riotApiKey";
 
 const CLUSTERS = [
   "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
@@ -31,11 +30,12 @@ async function getChampionCache() {
 }
 
 async function fetchSummonerByPuuid(puuid: string) {
-  if (!RIOT_API_KEY) return null;
+  const key = getRiotApiKey();
+  if (!key) return null;
   for (const cluster of CLUSTERS) {
     const url = `https://${cluster}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
     try {
-      const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
+      const res = await fetch(url, { headers: { "X-Riot-Token": key }, cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         return { ...json, region: cluster };
@@ -48,7 +48,7 @@ async function fetchSummonerByPuuid(puuid: string) {
 }
 
 export async function GET(req: Request) {
-  if (!RIOT_API_KEY) {
+  if (!getRiotApiKey()) {
     return NextResponse.json({ error: "RIOT_API_KEY no configurada" }, { status: 500 });
   }
   const { searchParams } = new URL(req.url);
@@ -64,8 +64,9 @@ export async function GET(req: Request) {
   }
 
   try {
+    const token = getRiotApiKey()!;
     const url = `https://${summoner.region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodeURIComponent(puuid)}`;
-    const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
+    const res = await fetch(url, { headers: { "X-Riot-Token": token }, cache: "no-store" });
     if (!res.ok) {
       const text = await res.text();
       return NextResponse.json({ error: text || "Error obteniendo maestrías", status: res.status }, { status: res.status });

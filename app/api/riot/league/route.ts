@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getRiotApiKey } from "@/lib/riotApiKey";
 
 interface LeagueEntry {
   queueType: string;
@@ -9,18 +10,17 @@ interface LeagueEntry {
   losses: number;
 }
 
-const RIOT_API_KEY = process.env.RIOT_API_KEY as string | undefined;
-
 const CLUSTERS = [
   "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
 ];
 
 async function fetchLeagueEntriesByPuuid(puuid: string): Promise<{ entries: LeagueEntry[]; region: string } | null> {
-  if (!RIOT_API_KEY) return null;
+  const key = getRiotApiKey();
+  if (!key) return null;
   for (const cluster of CLUSTERS) {
     const url = `https://${cluster}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`;
     try {
-      const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
+      const res = await fetch(url, { headers: { "X-Riot-Token": key }, cache: "no-store" });
       if (res.ok) {
         const entriesJson: unknown = await res.json();
         if (Array.isArray(entriesJson)) {
@@ -35,7 +35,7 @@ async function fetchLeagueEntriesByPuuid(puuid: string): Promise<{ entries: Leag
 }
 
 export async function GET(req: Request) {
-  if (!RIOT_API_KEY) {
+  if (!getRiotApiKey()) {
     return NextResponse.json({ error: "RIOT_API_KEY no configurada" }, { status: 500 });
   }
   const { searchParams } = new URL(req.url);

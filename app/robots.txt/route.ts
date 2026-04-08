@@ -8,7 +8,7 @@ export async function GET() {
     "Disallow: /auth/",
     "Disallow: /dashboard/",
     "Disallow: /home/",
-    "Disallow: /multi-search/",
+    "Disallow: /top-campeones/",
     "Allow: /about",
     "Allow: /ads.txt",
   ];

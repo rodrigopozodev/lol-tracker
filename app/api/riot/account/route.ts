@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const RIOT_API_KEY = process.env.RIOT_API_KEY as string | undefined;
+import { getRiotApiKey } from "@/lib/riotApiKey";
 
 const CLUSTERS = [
   "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
@@ -9,7 +8,7 @@ const CLUSTERS = [
 const ACCOUNT_GROUPS = ["europe", "americas", "asia"];
 
 async function fetchAccountByRiotId(gameName: string, tagLine: string) {
-  const headers = { "X-Riot-Token": process.env.RIOT_API_KEY || "" };
+  const headers = { "X-Riot-Token": getRiotApiKey() || "" };
   let lastStatus = 404;
   for (const group of ACCOUNT_GROUPS) {
     const url = `https://${group}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
@@ -31,7 +30,7 @@ async function fetchAccountByRiotId(gameName: string, tagLine: string) {
 }
 
 async function fetchAccountByPuuid(puuid: string) {
-  const headers = { "X-Riot-Token": process.env.RIOT_API_KEY || "" };
+  const headers = { "X-Riot-Token": getRiotApiKey() || "" };
   for (const group of ACCOUNT_GROUPS) {
     const url = `https://${group}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${encodeURIComponent(puuid)}`;
     try {
@@ -50,11 +49,12 @@ async function fetchAccountByPuuid(puuid: string) {
 }
 
 async function findPuuidBySummonerName(name: string): Promise<string | null> {
-  if (!RIOT_API_KEY) return null;
+  const key = getRiotApiKey();
+  if (!key) return null;
   for (const cluster of CLUSTERS) {
     const url = `https://${cluster}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${encodeURIComponent(name)}`;
     try {
-      const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
+      const res = await fetch(url, { headers: { "X-Riot-Token": key }, cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         const puuid = json?.puuid as string | undefined;
@@ -68,11 +68,12 @@ async function findPuuidBySummonerName(name: string): Promise<string | null> {
 }
 
 async function fetchSummonerByPuuid(puuid: string) {
-  if (!RIOT_API_KEY) return null;
+  const key = getRiotApiKey();
+  if (!key) return null;
   for (const cluster of CLUSTERS) {
     const url = `https://${cluster}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
     try {
-      const res = await fetch(url, { headers: { "X-Riot-Token": RIOT_API_KEY }, cache: "no-store" });
+      const res = await fetch(url, { headers: { "X-Riot-Token": key }, cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         return { ...json, region: cluster };
@@ -85,7 +86,7 @@ async function fetchSummonerByPuuid(puuid: string) {
 }
 
 export async function GET(req: Request) {
-  if (!RIOT_API_KEY) {
+  if (!getRiotApiKey()) {
     return NextResponse.json({ error: "RIOT_API_KEY no configurada" }, { status: 500 });
   }
   const { searchParams } = new URL(req.url);
