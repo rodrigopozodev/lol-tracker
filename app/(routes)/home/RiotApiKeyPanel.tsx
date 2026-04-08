@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import type { RefreshAccountsState } from "@/lib/refreshAccountsUiMessage";
+
+import { RefreshResultBanner } from "./RefreshResultBanner";
 import { useAccountBackgroundRefresh } from "./useAccountBackgroundRefresh";
 
 export function RiotApiKeyPanel() {
@@ -11,15 +14,19 @@ export function RiotApiKeyPanel() {
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [savingKey, setSavingKey] = useState(false);
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  /** Errores de validación o de guardar la clave (antes del refresco). */
+  const [saveError, setSaveError] = useState<string | null>(null);
+  /** Resultado del refresco Riot → SQLite (incluye lista de avisos por cuenta). */
+  const [refreshOutcome, setRefreshOutcome] = useState<RefreshAccountsState | null>(null);
 
   const busy = savingKey || refreshPending;
 
   const submit = async () => {
-    setMessage(null);
+    setSaveError(null);
+    setRefreshOutcome(null);
     const trimmed = apiKey.trim();
     if (!trimmed.startsWith("RGAPI-")) {
-      setMessage({ type: "err", text: "La clave debe empezar por RGAPI-." });
+      setSaveError("La clave debe empezar por RGAPI-.");
       return;
     }
     setSavingKey(true);
@@ -31,36 +38,25 @@ export function RiotApiKeyPanel() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMessage({ type: "err", text: (json as { error?: string })?.error || `Error ${res.status}` });
+        setSaveError((json as { error?: string })?.error || `Error ${res.status}`);
         return;
       }
-      setMessage({
-        type: "ok",
-        text: "Clave guardada. Descargando datos en segundo plano (sin cortar por timeout del proxy)…",
-      });
       setApiKey("");
 
       const refresh = await run();
+      let outcome: RefreshAccountsState = refresh;
       if (!refresh.ok) {
-        setMessage({
-          type: "err",
-          text:
+        outcome = {
+          ...refresh,
+          message:
             refresh.message +
             " Si en el servidor tienes RIOT_API_KEY en el entorno, tiene prioridad sobre la clave guardada aquí: actualízala o elimínala.",
-        });
-      } else {
-        setMessage({
-          type: "ok",
-          text:
-            refresh.message +
-            (refresh.updated === 0
-              ? " Si no ves cambios, recarga la página en un momento."
-              : ""),
-        });
+        };
       }
+      setRefreshOutcome(outcome);
       router.refresh();
     } catch {
-      setMessage({ type: "err", text: "Error de red al guardar la clave o al consultar el estado del refresco." });
+      setSaveError("Error de red al guardar la clave o al consultar el estado del refresco.");
     } finally {
       setSavingKey(false);
     }
@@ -85,7 +81,8 @@ export function RiotApiKeyPanel() {
           type="button"
           onClick={() => {
             setOpen((o) => !o);
-            setMessage(null);
+            setSaveError(null);
+            setRefreshOutcome(null);
           }}
           className="shrink-0 rounded-lg border border-purple-500/50 bg-purple-600/30 px-5 py-2.5 text-base font-semibold text-white hover:bg-purple-600/50"
         >
@@ -120,17 +117,17 @@ export function RiotApiKeyPanel() {
           >
             {busy ? (savingKey && !refreshPending ? "Guardando clave…" : "Actualizando datos…") : "Guardar clave"}
           </button>
-          {message && (
-            <p
-              className={
-                message.type === "ok"
-                  ? "text-base text-emerald-300"
-                  : "text-base text-red-300"
-              }
-            >
-              {message.text}
+
+          {refreshPending ? (
+            <p className="text-sm text-[#B8A9C9]">
+              Descargando datos en segundo plano… suele tardar varios minutos. Abajo verás el detalle de cada cuenta
+              cuando termine.
             </p>
-          )}
+          ) : null}
+
+          {saveError ? <p className="text-base text-red-300">{saveError}</p> : null}
+
+          {refreshOutcome && !refreshPending ? <RefreshResultBanner state={refreshOutcome} /> : null}
         </div>
       )}
     </div>
