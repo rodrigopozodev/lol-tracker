@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { formatEsDateTime } from "@/lib/formatEsDateTime";
+
 export type ChampionAggregateBootstrap = {
   computedAt: number;
   seasonYear: number;
@@ -35,13 +37,7 @@ type ApiPayload = ChampionAggregateBootstrap & {
 };
 
 function formatComputedAt(ms: number) {
-  return new Date(ms).toLocaleString("es-ES", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatEsDateTime(ms);
 }
 
 export function ChampionAggregatePanel({

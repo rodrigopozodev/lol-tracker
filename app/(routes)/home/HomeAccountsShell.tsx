@@ -1,3 +1,4 @@
+import { formatEsDateTime } from "@/lib/formatEsDateTime";
 import DashboardNav from "@/components/layout/DashboardNav";
 import { MultiSearchPlayerCard } from "@/components/multi/MultiSearchPlayerCard";
 import type { AccountRow, AccountSnapshotRow } from "@/lib/db";
@@ -24,16 +25,7 @@ export function HomeAccountsShell({
   apiKeySavedAtMs: number | null;
   apiKeyFromEnv: boolean;
 }) {
-  const updatedLabel =
-    lastUpdate > 0
-      ? new Date(lastUpdate).toLocaleString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "—";
+  const updatedLabel = lastUpdate > 0 ? formatEsDateTime(lastUpdate) : "—";
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0416]">

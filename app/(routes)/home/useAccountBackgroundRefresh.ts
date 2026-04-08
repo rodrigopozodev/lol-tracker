@@ -56,7 +56,7 @@ export function useAccountBackgroundRefresh() {
           const ui = toRefreshAccountsState(j.result);
           setLastState(ui);
           if (typeof window !== "undefined" && ui.ok && ui.updated > 0) {
-            window.location.reload();
+            window.setTimeout(() => window.location.reload(), 150);
             return ui;
           }
           router.refresh();

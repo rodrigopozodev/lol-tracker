@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { formatEsDateTime } from "@/lib/formatEsDateTime";
 import { championSquareUrl, profileIconUrl } from "@/lib/ddAssets";
 import { parseRankText } from "@/lib/riot/rankTierScore";
 
@@ -304,22 +305,10 @@ export function MultiSearchPlayerCard({
 
   const displayUpdated =
     typeof updatedAt === "number"
-      ? new Date(updatedAt).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? formatEsDateTime(updatedAt)
       : clientNow === null
         ? "—"
-        : new Date(clientNow).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+        : formatEsDateTime(clientNow);
 
   function streakPill(
     label: string,
@@ -515,7 +504,9 @@ export function MultiSearchPlayerCard({
             <div className="text-sm text-gray-400 sm:text-base">
               {player.region} · Lv {player.level}
             </div>
-            <div className="text-xs text-gray-600 sm:text-sm">{displayUpdated}</div>
+            <div className="text-xs text-gray-600 sm:text-sm" suppressHydrationWarning>
+              {displayUpdated}
+            </div>
           </div>
         </div>
 
