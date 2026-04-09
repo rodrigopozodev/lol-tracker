@@ -5,12 +5,11 @@ export const dynamic = "force-static";
 export async function GET() {
   const lines = [
     "User-agent: *",
-    "Disallow: /auth/",
-    "Disallow: /dashboard/",
-    "Disallow: /home/",
-    "Disallow: /top-campeones/",
-    "Allow: /about",
+    "Allow: /",
+    "Allow: /summoner/",
+    "Allow: /policies/",
     "Allow: /ads.txt",
+    "",
   ];
 
   return new NextResponse(lines.join("\n"), {

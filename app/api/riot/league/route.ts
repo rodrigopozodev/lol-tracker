@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRiotApiKey } from "@/lib/riotApiKey";
+import { riotFetch } from "@/lib/riot/riotFetch";
+import { isRiotPlatform } from "@/lib/riot/platforms";
 
 interface LeagueEntry {
   queueType: string;
@@ -14,20 +16,26 @@ const CLUSTERS = [
   "euw1","eun1","na1","kr","br1","la1","la2","jp1","oc1","ru","tr1"
 ];
 
-async function fetchLeagueEntriesByPuuid(puuid: string): Promise<{ entries: LeagueEntry[]; region: string } | null> {
+async function fetchLeagueEntriesByPuuid(
+  puuid: string,
+  preferredCluster?: string | null
+): Promise<{ entries: LeagueEntry[]; region: string } | null> {
   const key = getRiotApiKey();
   if (!key) return null;
-  for (const cluster of CLUSTERS) {
+  const pref = preferredCluster?.toLowerCase().trim() || "";
+  const order =
+    pref && CLUSTERS.includes(pref) ? [pref, ...CLUSTERS.filter((c) => c !== pref)] : [...CLUSTERS];
+  for (const cluster of order) {
     const url = `https://${cluster}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`;
     try {
-      const res = await fetch(url, { headers: { "X-Riot-Token": key }, cache: "no-store" });
+      const res = await riotFetch(url, key);
       if (res.ok) {
         const entriesJson: unknown = await res.json();
         if (Array.isArray(entriesJson)) {
           return { entries: entriesJson as LeagueEntry[], region: cluster };
         }
       }
-    } catch (error) {
+    } catch {
       // continuar
     }
   }
@@ -40,11 +48,14 @@ export async function GET(req: Request) {
   }
   const { searchParams } = new URL(req.url);
   const puuid = searchParams.get("puuid");
+  const platformParam = searchParams.get("platform")?.trim() || null;
+  const platformHint =
+    platformParam && isRiotPlatform(platformParam.toLowerCase()) ? platformParam.toLowerCase() : null;
   if (!puuid) {
     return NextResponse.json({ error: "Falta puuid" }, { status: 400 });
   }
 
-  const result = await fetchLeagueEntriesByPuuid(puuid);
+  const result = await fetchLeagueEntriesByPuuid(puuid, platformHint);
   if (!result) {
     return NextResponse.json({ error: "No se pudo obtener información de ranking" }, { status: 404 });
   }

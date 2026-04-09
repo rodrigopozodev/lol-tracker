@@ -1,3 +1,4 @@
+import { enrichRowsChampionImageKeys } from "@/lib/ddragon/championImageKey";
 import { isRemakeParticipant } from "@/lib/riot/isRemakeMatch";
 import { enrichMatchesWithLobbyAvgTier } from "@/lib/riot/matchLobbyTier";
 import { riotFetch } from "@/lib/riot/riotFetch";
@@ -44,6 +45,7 @@ export type SeasonMatchRow = {
   durationSec: number | null;
   champion: string | null;
   championId: number | null;
+  championImageKey?: string | null;
   remake: boolean;
   win: boolean;
   kills: number | null;
@@ -135,6 +137,7 @@ export async function fetchMatchRowDetail(
       durationSec: (info.gameDuration as number) ?? null,
       champion: me?.championName || null,
       championId: typeof me?.championId === "number" ? me.championId : null,
+      championImageKey: null,
       remake,
       win: Boolean(me?.win),
       kills,
@@ -257,6 +260,7 @@ export async function fetchSeasonRankedMatchesForQueue(opts: {
   const streak = streakFromNewestFirst(inYear);
   const matches = inYear.slice(0, target);
 
+  await enrichRowsChampionImageKeys(matches);
   await enrichMatchesWithLobbyAvgTier(matches, plat, token, queue);
 
   return { ok: true, matches, streak, group };

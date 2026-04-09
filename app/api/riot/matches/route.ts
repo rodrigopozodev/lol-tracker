@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enrichRowsChampionImageKeys } from "@/lib/ddragon/championImageKey";
 import { getRiotApiKey } from "@/lib/riotApiKey";
 import { riotFetch } from "@/lib/riot/riotFetch";
 import { isRemakeParticipant } from "@/lib/riot/isRemakeMatch";
@@ -79,6 +80,8 @@ type MatchRow = {
   queueLabel: string;
   durationSec: number | null;
   champion: string | null;
+  championId: number | null;
+  championImageKey: string | null;
   remake: boolean;
   win: boolean;
   kills: number | null;
@@ -118,6 +121,7 @@ async function fetchMatchRow(
       ? (
           info.participants as {
             puuid?: string;
+            championId?: number;
             championName?: string;
             win?: boolean;
             gameEndedInEarlySurrender?: boolean;
@@ -140,6 +144,8 @@ async function fetchMatchRow(
       queueLabel: queueLabel(info.queueId as number),
       durationSec: (info.gameDuration as number) ?? null,
       champion: me?.championName || null,
+      championId: typeof me?.championId === "number" ? me.championId : null,
+      championImageKey: null,
       remake,
       win: Boolean(me?.win),
       kills,
@@ -238,6 +244,7 @@ export async function GET(req: Request) {
           { status: st }
         );
       }
+      await enrichRowsChampionImageKeys(result.matches);
       return NextResponse.json({
         region: platform,
         group: result.group,
@@ -277,6 +284,8 @@ export async function GET(req: Request) {
     const matches = raw
       .filter((row): row is MatchRow => !("error" in row && row.error) && Boolean((row as MatchRow).champion))
       .sort((a, b) => (b.ts ?? 0) - (a.ts ?? 0));
+
+    await enrichRowsChampionImageKeys(matches);
 
     return NextResponse.json({ region: platform, group, matches });
   } catch (e: unknown) {
